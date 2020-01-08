@@ -36,6 +36,10 @@ except ImportError:
 app = Flask(__name__)
 
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 # define a predict function as an endpoint 
 @app.route("/process", methods=["POST"])
 def process():
@@ -44,9 +48,14 @@ def process():
     output_path = generate_random_filename(upload_directory,"jpg")
 
     try:
-        url = request.json["url"]
+        if 'file' in request.files:
+            file = request.files['file']
+            if allowed_file(file.filename):
+                file.save(input_path)
+        else:
+            url = request.json["url"]
 
-        download(url, input_path)
+            download(url, input_path)
 
         results = []
 
@@ -75,6 +84,8 @@ def process():
 
 if __name__ == '__main__':
     global upload_directory
+    global ALLOWED_EXTENSIONS
+    ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
     upload_directory = '/src/upload/'
     create_directory(upload_directory)
